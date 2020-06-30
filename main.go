@@ -1,9 +1,9 @@
 package main
 
 import (
-	"apirest/products"
-	"apirest/util"
 	"net/http"
+	"shopify/products"
+	"shopify/util"
 
 	"github.com/gorilla/mux"
 )

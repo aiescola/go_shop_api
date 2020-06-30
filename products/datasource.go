@@ -6,5 +6,5 @@ type ProductDataSource interface {
 }
 
 func MakeLocalProductDataSource() *localDataSource {
-	return &localDataSource{[]Product{{"MUG", "Mug", 5.4}, {"TSHIRT", "T-Shirt", 12.5}}}
+	return &localDataSource{[]Product{{"MUG", "Mug", 5.4}, {"TSHIRT", "T-Shirt", 12.5}, {"PEN", "Pen", 3.2}}}
 }
