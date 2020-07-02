@@ -1,27 +1,50 @@
 package main
 
 import (
+	"context"
+	"log"
 	"net/http"
-	"shopify/products"
+	"shopify/api"
 	"shopify/util"
+	"time"
 
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type ApiService interface {
-	AddRoutes(router *mux.Router)
-}
-
-var productService ApiService
+const (
+	DEFAULT_PORT      = "8080"
+	DEFAULT_MONGO_URI = "mongodb://localhost:27017"
+	DEFAULT_BBDD_NAME = "shopify"
+)
 
 func main() {
-	port := util.GetEnv("PORT", "8080")
+	port := util.GetEnv("PORT", DEFAULT_PORT)
+	dbUri := util.GetEnv("BBDD_URI", DEFAULT_MONGO_URI)
+	dbName := util.GetEnv("BBDD_NAME", DEFAULT_BBDD_NAME)
 
-	dataSource := products.MakeLocalProductDataSource()
-	productService = products.New(dataSource)
+	database, err := createDatabase(dbUri, dbName)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	router := mux.NewRouter()
-	productService.AddRoutes(router)
+
+	api.Initialize(database, router)
 
 	http.ListenAndServe(":"+port, router)
+}
+
+func createDatabase(dbUri string, dbName string) (*mongo.Database, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbUri))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return client.Database(dbName), nil
 }
