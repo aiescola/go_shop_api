@@ -14,7 +14,7 @@ type mongoDataSource struct {
 }
 
 func (dataSource *mongoDataSource) GetOne(code string) (*Product, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
 	defer cancel()
 
 	result := dataSource.collection.FindOne(ctx, bson.M{"code": code})
@@ -31,7 +31,7 @@ func (dataSource *mongoDataSource) GetOne(code string) (*Product, error) {
 }
 
 func (dataSource *mongoDataSource) GetProducts() ([]Product, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
 	defer cancel()
 
 	cursor, err := dataSource.collection.Find(ctx, bson.M{})
@@ -55,7 +55,7 @@ func (dataSource *mongoDataSource) GetProducts() ([]Product, error) {
 }
 
 func (dataSource *mongoDataSource) AddProduct(product Product) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
 	defer cancel()
 
 	_, err := dataSource.collection.InsertOne(ctx, product)

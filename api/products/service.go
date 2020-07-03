@@ -2,7 +2,6 @@ package products
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -37,7 +36,8 @@ func (p *ProductService) getProducts(response http.ResponseWriter, request *http
 	products, err := p.dataSource.GetProducts()
 
 	if err != nil {
-		http.Error(response, err.Error(), http.StatusInternalServerError)
+		response.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(response).Encode(ErrorResponse{http.StatusInternalServerError, err.Error()})
 		return
 	}
 
@@ -52,7 +52,6 @@ func (p *ProductService) getProduct(response http.ResponseWriter, request *http.
 
 	product, err := p.dataSource.GetOne(params["Code"])
 	if err != nil {
-		fmt.Println("error")
 		response.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(response).Encode(ErrorResponse{http.StatusInternalServerError, err.Error()})
 		return
