@@ -2,7 +2,6 @@ package products
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,11 +13,11 @@ type mongoDataSource struct {
 }
 
 func (dataSource *mongoDataSource) GetOne(code string) (*Product, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	result := dataSource.collection.FindOne(ctx, bson.M{"code": code})
-	fmt.Println("result: ", result)
+
 	if err := result.Err(); err != nil {
 		return nil, err
 	}
@@ -31,7 +30,7 @@ func (dataSource *mongoDataSource) GetOne(code string) (*Product, error) {
 }
 
 func (dataSource *mongoDataSource) GetProducts() ([]Product, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	cursor, err := dataSource.collection.Find(ctx, bson.M{})
@@ -55,7 +54,7 @@ func (dataSource *mongoDataSource) GetProducts() ([]Product, error) {
 }
 
 func (dataSource *mongoDataSource) AddProduct(product Product) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	_, err := dataSource.collection.InsertOne(ctx, product)
