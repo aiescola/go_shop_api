@@ -11,7 +11,7 @@ func (d *localDataSource) GetProducts() ([]Product, error) {
 	//	return nil, errors.New("Failure getting product")
 }
 
-func (d *localDataSource) GetOne(code string) (*Product, error) {
+func (d *localDataSource) GetProduct(code string) (*Product, error) {
 	for _, product := range d.products {
 		if product.Code == code {
 			return &product, nil

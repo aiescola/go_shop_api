@@ -4,17 +4,20 @@ import "go.mongodb.org/mongo-driver/mongo"
 
 type ProductDataSource interface {
 	GetProducts() ([]Product, error)
-	GetOne(code string) (*Product, error)
+	GetProduct(code string) (*Product, error)
 	AddProduct(product Product) error
 }
 
-func NewLocalProductDataSource() *localDataSource {
+func NewLocalDataSource() *localDataSource {
 	return &localDataSource{
-		[]Product{{"MUG", "Mug", 5.4}, {"TSHIRT", "T-Shirt", 12.5}, {"PEN", "Pen", 3.2}},
+		[]Product{
+			{"MUG", "Mug", 5.4},
+			{"TSHIRT", "T-Shirt", 12.5},
+			{"PEN", "Pen", 3.2}},
 	}
 }
 
-func NewMongoProductDataSource(database *mongo.Database) *mongoDataSource {
+func NewMongoDataSource(database *mongo.Database) *mongoDataSource {
 	return &mongoDataSource{
 		collection: database.Collection("products"),
 	}

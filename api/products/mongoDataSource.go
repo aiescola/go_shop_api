@@ -12,23 +12,6 @@ type mongoDataSource struct {
 	collection *mongo.Collection
 }
 
-func (dataSource *mongoDataSource) GetOne(code string) (*Product, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	result := dataSource.collection.FindOne(ctx, bson.M{"code": code})
-
-	if err := result.Err(); err != nil {
-		return nil, err
-	}
-	product := new(Product)
-	if err := result.Decode(product); err != nil {
-		return nil, err
-	}
-
-	return product, nil
-}
-
 func (dataSource *mongoDataSource) GetProducts() ([]Product, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
@@ -51,6 +34,23 @@ func (dataSource *mongoDataSource) GetProducts() ([]Product, error) {
 	}
 
 	return products, nil
+}
+
+func (dataSource *mongoDataSource) GetProduct(code string) (*Product, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	result := dataSource.collection.FindOne(ctx, bson.M{"code": code})
+
+	if err := result.Err(); err != nil {
+		return nil, err
+	}
+	product := new(Product)
+	if err := result.Decode(product); err != nil {
+		return nil, err
+	}
+
+	return product, nil
 }
 
 func (dataSource *mongoDataSource) AddProduct(product Product) error {

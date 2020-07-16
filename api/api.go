@@ -1,18 +1,29 @@
 package api
 
 import (
+	"shopify/api/login"
 	"shopify/api/products"
 
-	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// Initializes the api
-func Initialize(database *mongo.Database, router *mux.Router, logger *log.Logger) {
-	//productDataSource := products.NewLocalProductDataSource()
-	productDataSource := products.NewMongoProductDataSource(database)
-	productService := products.NewService(productDataSource, logger)
+type Api struct {
+	ProductController *products.ProductController
+	LoginController   *login.LoginController
+}
 
-	productService.AddRoutes(router)
+// Initializes the api
+func New(database *mongo.Database, cookieStore *sessions.CookieStore, logger *log.Logger) *Api {
+	productDataSource := products.NewMongoDataSource(database)
+	productController := products.NewController(productDataSource, logger)
+
+	loginDataSource := login.NewMongoDataSource(database)
+	loginController := login.NewController(loginDataSource, cookieStore, logger)
+
+	return &Api{
+		productController,
+		loginController,
+	}
 }
