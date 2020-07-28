@@ -4,14 +4,10 @@ import (
 	"context"
 	"net/http"
 	"shopify/api"
-	"shopify/middleware"
 	"shopify/util"
 	"strconv"
 	"time"
 
-	"html/template"
-
-	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
@@ -31,30 +27,25 @@ const (
 
 var logger *log.Logger
 var cookieStore *sessions.CookieStore
-var templates *template.Template
 
 func main() {
 	port := util.GetEnv("PORT", DEFAULT_PORT)
-	dbUri := util.GetEnv("BBDD_URI", DEFAULT_MONGO_URI)
-	dbName := util.GetEnv("BBDD_NAME", DEFAULT_BBDD_NAME)
 	sessionKey := util.GetEnv("SESSION_KEY", DEFAULT_SESSION_KEY)
 
 	logger = log.New()
 	cookieStore = sessions.NewCookieStore([]byte(sessionKey))
-	templates = template.Must(template.ParseGlob("templates/*.html"))
 
 	logger.Info("port: ", port)
-	logger.Info("dbUri: ", dbUri)
-	logger.Info("dbName: ", dbName)
 
-	mongoClient := connectToDatabase(dbUri)
+	database := connectToDatabase()
 
-	router := createRouter(mongoClient.Database(dbName))
+	api := api.New(database, cookieStore, logger)
+	router := api.CreateRouter()
 
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
 	n.UseHandler(router)
 
-	server := &http.Server{
+	server := http.Server{
 		Addr:         ":" + port,
 		Handler:      n,
 		ReadTimeout:  10 * time.Second,
@@ -64,31 +55,14 @@ func main() {
 	logger.Error(server.ListenAndServe())
 }
 
-func createRouter(database *mongo.Database) *mux.Router {
-	router := mux.NewRouter()
-
-	api := api.New(database, cookieStore, logger)
-
-	var middleware = middleware.NewAuthMiddleware(cookieStore, logger)
-
-	router.HandleFunc("/api/products", api.ProductController.GetProducts).Methods("GET")
-	router.HandleFunc("/api/products/{Code}", api.ProductController.GetProduct).Methods("GET")
-	router.HandleFunc("/api/products", middleware.Intercept(api.ProductController.AddProduct)).Methods("POST")
-
-	router.HandleFunc("/register", api.LoginController.Register).Methods("POST")
-	router.HandleFunc("/login", api.LoginController.Login).Methods("POST")
-
-	//TODO: remove this, it's a test
-	router.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		templates.ExecuteTemplate(w, "login.html", nil)
-	}).Methods("GET")
-
-	return router
-}
-
-func connectToDatabase(dbUri string) *mongo.Client {
+func connectToDatabase() *mongo.Database {
+	dbUri := util.GetEnv("BBDD_URI", DEFAULT_MONGO_URI)
 	timeout := util.GetEnv("CONNECTION_TIMEOUT", DEFAULT_CONNECTION_TIMEOUT)
-	logger.Info("CONNECTION_TIMEOUT: ", timeout)
+	dbName := util.GetEnv("BBDD_NAME", DEFAULT_BBDD_NAME)
+
+	logger.Info("dbUri: ", dbUri)
+	logger.Info("timeout: ", timeout)
+	logger.Info("dbName: ", dbName)
 
 	connectionTimeout, err := strconv.Atoi(timeout)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(connectionTimeout)*time.Second)
@@ -108,5 +82,5 @@ func connectToDatabase(dbUri string) *mongo.Client {
 	names, _ := client.ListDatabaseNames(ctx, bson.M{}, options.ListDatabases())
 	logger.Info("databases: ", names)
 
-	return client
+	return client.Database(dbName)
 }

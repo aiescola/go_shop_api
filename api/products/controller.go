@@ -16,8 +16,8 @@ type ProductController struct {
 }
 
 //NewController using the dataSource and logger passed as parameters
-func NewController(ds ProductDataSource, logger *log.Logger) *ProductController {
-	return &ProductController{
+func NewController(ds ProductDataSource, logger *log.Logger) ProductController {
+	return ProductController{
 		ds,
 		logger.WithFields(log.Fields{
 			"file": "ProductController",
@@ -25,7 +25,7 @@ func NewController(ds ProductDataSource, logger *log.Logger) *ProductController 
 	}
 }
 
-func (p *ProductController) GetProducts(response http.ResponseWriter, request *http.Request) {
+func (p ProductController) GetProducts(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 
 	products, err := p.dataSource.GetProducts()
@@ -43,11 +43,11 @@ func (p *ProductController) GetProducts(response http.ResponseWriter, request *h
 	}{products})
 }
 
-func (p *ProductController) GetProduct(response http.ResponseWriter, request *http.Request) {
+func (p ProductController) GetProduct(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(request)
 
-	product, err := p.dataSource.GetProduct(params["Code"])
+	product, err := p.dataSource.GetProduct(params["code"])
 	if err != nil {
 		p.logger.Error(err)
 		util.EncodeError(response, http.StatusInternalServerError, err.Error())
@@ -58,7 +58,7 @@ func (p *ProductController) GetProduct(response http.ResponseWriter, request *ht
 
 }
 
-func (p *ProductController) AddProduct(response http.ResponseWriter, request *http.Request) {
+func (p ProductController) AddProduct(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	var product Product
 

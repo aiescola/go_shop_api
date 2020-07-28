@@ -7,8 +7,8 @@ type LoginDataSource interface {
 	createUser(credentials Credentials) error
 }
 
-func NewMongoDataSource(database *mongo.Database) *mongoLoginDataSource {
-	return &mongoLoginDataSource{
+func NewMongoDataSource(database *mongo.Database) mongoLoginDataSource {
+	return mongoLoginDataSource{
 		collection: database.Collection("credentials"),
 	}
 }

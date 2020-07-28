@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"shopify/util"
+	"text/template"
 
 	"github.com/gorilla/sessions"
 	log "github.com/sirupsen/logrus"
@@ -14,20 +15,25 @@ import (
 type LoginController struct {
 	dataSource  LoginDataSource
 	cookieStore *sessions.CookieStore
+	templates   *template.Template
 	logger      *log.Entry
 }
 
-func NewController(registerDataSource LoginDataSource, cookieStore *sessions.CookieStore, logger *log.Logger) *LoginController {
-	return &LoginController{
+func NewController(registerDataSource LoginDataSource,
+	cookieStore *sessions.CookieStore,
+	templates *template.Template,
+	logger *log.Logger) LoginController {
+	return LoginController{
 		registerDataSource,
 		cookieStore,
+		templates,
 		logger.WithFields(log.Fields{
 			"file": "LoginController",
 		}),
 	}
 }
 
-func (r *LoginController) Register(response http.ResponseWriter, request *http.Request) {
+func (r LoginController) Register(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	user := request.URL.Query()["user"][0]
 	password := request.URL.Query()["password"][0]
@@ -46,7 +52,11 @@ func (r *LoginController) Register(response http.ResponseWriter, request *http.R
 	json.NewEncoder(response).Encode("User created")
 }
 
-func (r *LoginController) Login(response http.ResponseWriter, request *http.Request) {
+func (lc LoginController) LoginForm(w http.ResponseWriter, r *http.Request) {
+	lc.templates.ExecuteTemplate(w, "login.html", nil)
+}
+
+func (r LoginController) Login(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 
 	request.ParseForm()

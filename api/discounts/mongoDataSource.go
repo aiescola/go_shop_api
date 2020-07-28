@@ -1,4 +1,4 @@
-package products
+package discounts
 
 import (
 	"context"
@@ -8,11 +8,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type mongoDataSource struct {
+type mongoDiscountDataSource struct {
 	collection *mongo.Collection
 }
 
-func (ds mongoDataSource) GetProducts() ([]Product, error) {
+func (ds mongoDiscountDataSource) GetDiscounts() ([]Discount, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -23,20 +23,20 @@ func (ds mongoDataSource) GetProducts() ([]Product, error) {
 		return nil, err
 	}
 
-	var products []Product
+	var discounts []Discount
 	for cursor.Next(ctx) {
-		var p Product
-		cursor.Decode(&p)
-		products = append(products, p)
+		var d Discount
+		cursor.Decode(&d)
+		discounts = append(discounts, d)
 	}
 	if err := cursor.Err(); err != nil {
 		return nil, err
 	}
 
-	return products, nil
+	return discounts, nil
 }
 
-func (ds mongoDataSource) GetProduct(code string) (*Product, error) {
+func (ds mongoDiscountDataSource) GetDiscount(code string) (*Discount, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -45,19 +45,19 @@ func (ds mongoDataSource) GetProduct(code string) (*Product, error) {
 	if err := result.Err(); err != nil {
 		return nil, err
 	}
-	product := new(Product)
-	if err := result.Decode(product); err != nil {
+	discount := new(Discount)
+	if err := result.Decode(discount); err != nil {
 		return nil, err
 	}
 
-	return product, nil
+	return discount, nil
 }
 
-func (ds mongoDataSource) AddProduct(product Product) error {
+func (ds mongoDiscountDataSource) AddDiscount(discount Discount) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	_, err := ds.collection.InsertOne(ctx, product)
+	_, err := ds.collection.InsertOne(ctx, discount)
 	if err != nil {
 		return err
 	}

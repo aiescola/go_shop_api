@@ -12,7 +12,7 @@ type mongoLoginDataSource struct {
 	collection *mongo.Collection
 }
 
-func (ds *mongoLoginDataSource) getPassword(user string) (*string, error) {
+func (ds mongoLoginDataSource) getPassword(user string) (*string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -31,7 +31,7 @@ func (ds *mongoLoginDataSource) getPassword(user string) (*string, error) {
 
 }
 
-func (ds *mongoLoginDataSource) createUser(credentials Credentials) error {
+func (ds mongoLoginDataSource) createUser(credentials Credentials) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
