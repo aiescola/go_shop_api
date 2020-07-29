@@ -1,0 +1,18 @@
+version: '3.3'
+services:
+  api:
+    container_name: 'go_shop_api'
+    build: './'
+    ports: 
+      - '8080:8080'
+    depends_on: 
+      - 'mongo'
+    links:
+      - mongo:mongo
+  mongo:
+    image: 'mongo:latest'
+    container_name: 'mongo'
+    volumes:
+    - ./db:/data/db
+    ports:
+      - '27100:27017'
