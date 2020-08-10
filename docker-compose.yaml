@@ -1,8 +1,9 @@
-version: '3.3'
+version: '3.8'
 services:
   api:
     container_name: 'go_shop_api'
     build: './'
+    image: 'go_shop_api'
     ports: 
       - '8080:8080'
     depends_on: 

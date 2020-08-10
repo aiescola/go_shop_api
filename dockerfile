@@ -1,4 +1,5 @@
 FROM golang:1.14.6-alpine as builder
+LABEL stage=builder
 
 RUN mkdir /app
 WORKDIR /app

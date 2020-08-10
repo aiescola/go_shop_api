@@ -73,6 +73,13 @@ func (dc DiscountController) AddDiscount(response http.ResponseWriter, request *
 		return
 	}
 
+	// check that the discount doesn't already exist on DB
+	if dbDiscount, _ := dc.dataSource.GetDiscount(discount.Code); dbDiscount != nil {
+		dc.logger.Error("Discount already exists")
+		util.EncodeError(response, http.StatusBadRequest, "Discount already exists")
+		return
+	}
+
 	if err := dc.dataSource.AddDiscount(discount); err != nil {
 		dc.logger.Error(err)
 		util.EncodeError(response, http.StatusBadRequest, err.Error())

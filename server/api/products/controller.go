@@ -75,6 +75,13 @@ func (p ProductController) AddProduct(response http.ResponseWriter, request *htt
 		return
 	}
 
+	// check that the product doesn't already exist on DB
+	if dbProduct, _ := p.dataSource.GetProduct(product.Code); dbProduct != nil {
+		p.logger.Error("Product already exists")
+		util.EncodeError(response, http.StatusBadRequest, "Product already exists")
+		return
+	}
+
 	if err := p.dataSource.AddProduct(product); err != nil {
 		p.logger.Error(err)
 		util.EncodeError(response, http.StatusBadRequest, err.Error())

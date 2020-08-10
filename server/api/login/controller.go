@@ -36,12 +36,14 @@ func NewController(registerDataSource LoginDataSource,
 
 func (r LoginController) Register(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
-	user := request.URL.Query()["user"][0]
-	password := request.URL.Query()["password"][0]
+
+	request.ParseForm()
+	username := request.PostForm.Get("username")
+	password := request.PostForm.Get("password")
 
 	encodedPassword, _ := bcrypt.GenerateFromPassword([]byte(string(password)), bcrypt.DefaultCost)
 
-	credentials := Credentials{string(user), string(encodedPassword)}
+	credentials := Credentials{string(username), string(encodedPassword)}
 
 	if err := r.dataSource.createUser(credentials); err != nil {
 		r.logger.Error(err.Error())
