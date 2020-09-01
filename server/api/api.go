@@ -17,9 +17,9 @@ import (
 
 type Api struct {
 	authMiddleWare     middleware.Middleware
-	ProductController  products.ProductController
-	LoginController    login.LoginController
-	DiscountController discounts.DiscountController
+	productController  products.ProductController
+	loginController    login.LoginController
+	discountController discounts.DiscountController
 }
 
 // Initializes the api
@@ -47,17 +47,17 @@ func New(database *mongo.Database, redis *redis.Client, cookieStore *sessions.Co
 func (api Api) CreateRouter() *mux.Router {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/products", api.ProductController.GetProducts).Methods("GET")
-	router.HandleFunc("/api/products/{code}", api.ProductController.GetProduct).Methods("GET")
-	router.HandleFunc("/api/products", api.authMiddleWare.Intercept(api.ProductController.AddProduct)).Methods("POST")
+	router.HandleFunc("/register", api.loginController.Register).Methods("POST")
+	router.HandleFunc("/login", api.loginController.Login).Methods("POST")
+	router.HandleFunc("/login", api.loginController.LoginForm).Methods("GET")
 
-	router.HandleFunc("/register", api.LoginController.Register).Methods("POST")
-	router.HandleFunc("/login", api.LoginController.Login).Methods("POST")
-	router.HandleFunc("/login", api.LoginController.LoginForm).Methods("GET")
+	router.HandleFunc("/api/products", api.productController.GetProducts).Methods("GET")
+	router.HandleFunc("/api/products/{code}", api.productController.GetProduct).Methods("GET")
+	router.HandleFunc("/api/products", api.authMiddleWare.Intercept(api.productController.AddProduct)).Methods("POST")
 
-	router.HandleFunc("/discounts", api.DiscountController.GetDiscounts).Methods("GET")
-	router.HandleFunc("/discounts/{code}", api.DiscountController.GetDiscount).Methods("GET")
-	router.HandleFunc("/discounts", api.authMiddleWare.Intercept(api.DiscountController.AddDiscount)).Methods("POST")
+	router.HandleFunc("/api/discounts", api.discountController.GetDiscounts).Methods("GET")
+	router.HandleFunc("/api/discounts/{code}", api.discountController.GetDiscount).Methods("GET")
+	router.HandleFunc("/api/discounts", api.authMiddleWare.Intercept(api.discountController.AddDiscount)).Methods("POST")
 
 	return router
 }
