@@ -11,13 +11,15 @@ import (
 )
 
 type DiscountController struct {
-	dataSource DiscountDataSource
-	logger     *log.Entry
+	dataSource     DiscountDataSource
+	discountsCache DiscountsCache
+	logger         *log.Entry
 }
 
-func NewController(ds DiscountDataSource, logger *log.Logger) DiscountController {
+func NewController(ds DiscountDataSource, redisDataSource DiscountsCache, logger *log.Logger) DiscountController {
 	return DiscountController{
 		ds,
+		redisDataSource,
 		logger.WithFields(log.Fields{
 			"file": "DiscountController",
 		}),
@@ -27,13 +29,25 @@ func NewController(ds DiscountDataSource, logger *log.Logger) DiscountController
 func (dc DiscountController) GetDiscounts(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 
-	discounts, err := dc.dataSource.GetDiscounts()
+	var discounts []Discount
+	var err error
 
-	if err != nil {
-		dc.logger.Error(err.Error())
-		util.EncodeError(response, http.StatusInternalServerError, err.Error())
-		return
+	if discounts, err = dc.discountsCache.GetAll(); err != nil {
+		discounts, err = dc.dataSource.GetDiscounts()
+		dc.logger.Info("Retrieving discounts from mongo")
+
+		if err != nil {
+			dc.logger.Error(err.Error())
+			util.EncodeError(response, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		if err := dc.discountsCache.PutAll(discounts); err != nil {
+			dc.logger.Error(err.Error())
+		}
 	}
+
+	dc.logger.Info("Discounts retrieved: ", discounts)
 
 	json.NewEncoder(response).Encode(struct {
 		Discounts []Discount `json:"discounts"`

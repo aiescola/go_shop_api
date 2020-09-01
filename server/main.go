@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/aiescola/go_shop_api/api"
 	"github.com/aiescola/go_shop_api/util"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/sessions"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
@@ -22,6 +24,7 @@ const (
 	DEFAULT_MONGO_URI   = "mongodb://mongo:27017"
 	DEFAULT_BBDD_NAME   = "go_shop_db"
 	DEFAULT_SESSION_KEY = "t0p-s3cr3t"
+	DEFAULT_REDIS_ADDR  = "redis:6379"
 )
 
 var logger *log.Logger
@@ -36,9 +39,11 @@ func main() {
 
 	logger.Info("port: ", port)
 
+	client := createRedisClient()
+	fmt.Println("client: ", client)
 	database := connectToDatabase()
 
-	api := api.New(database, cookieStore, logger)
+	api := api.New(database, client, cookieStore, logger)
 	router := api.CreateRouter()
 
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
@@ -79,4 +84,22 @@ func connectToDatabase() *mongo.Database {
 	logger.Info("databases: ", names)
 
 	return client.Database(dbName)
+}
+
+func createRedisClient() *redis.Client {
+	addr := util.GetEnv("REDIS_ADDR", DEFAULT_REDIS_ADDR)
+	client := redis.NewClient(&redis.Options{
+		Addr: addr,
+	})
+
+	ctx := context.Background()
+	pong, err := client.Ping(ctx).Result()
+
+	fmt.Println(pong, err)
+
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	return client
 }

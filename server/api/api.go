@@ -7,6 +7,7 @@ import (
 	"github.com/aiescola/go_shop_api/api/login"
 	"github.com/aiescola/go_shop_api/api/products"
 	"github.com/aiescola/go_shop_api/middleware"
+	"github.com/go-redis/redis/v8"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -22,15 +23,18 @@ type Api struct {
 }
 
 // Initializes the api
-func New(database *mongo.Database, cookieStore *sessions.CookieStore, logger *log.Logger) Api {
+func New(database *mongo.Database, redis *redis.Client, cookieStore *sessions.CookieStore, logger *log.Logger) Api {
 	templates := template.Must(template.ParseGlob("templates/*.html"))
 	productDataSource := products.NewMongoDataSource(database)
 	loginDataSource := login.NewMongoDataSource(database)
 	discountDataSource := discounts.NewMongoDataSource(database)
 
-	productController := products.NewController(productDataSource, logger)
+	productsCache := products.NewProductsRedisCache(redis)
+	discountsCache := discounts.NewDiscountsRedisCache(redis)
+
+	productController := products.NewController(productDataSource, productsCache, logger)
 	loginController := login.NewController(loginDataSource, cookieStore, templates, logger)
-	discountController := discounts.NewController(discountDataSource, logger)
+	discountController := discounts.NewController(discountDataSource, discountsCache, logger)
 
 	return Api{
 		middleware.NewAuthMiddleware(cookieStore, logger),

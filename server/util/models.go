@@ -12,6 +12,6 @@ type ErrorResponse struct {
 }
 
 func EncodeError(response http.ResponseWriter, statusCode int, message string) {
-	response.WriteHeader(http.StatusInternalServerError)
+	response.WriteHeader(statusCode)
 	json.NewEncoder(response).Encode(ErrorResponse{Status: statusCode, Err: message})
 }

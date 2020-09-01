@@ -8,8 +8,10 @@ services:
       - '8080:8080'
     depends_on: 
       - 'mongo'
+      - 'redis'
     links:
       - mongo:mongo
+      - redis:redis
   mongo:
     image: 'mongo:latest'
     container_name: 'mongo'
@@ -17,3 +19,10 @@ services:
     - ./db:/data/db
     ports:
       - '27100:27017'
+  redis:
+    image: 'redis:alpine3.12'
+    container_name: 'redis'
+    volumes: 
+    - .cache:/data
+    ports:
+      - '6379:6379'

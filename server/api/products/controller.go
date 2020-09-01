@@ -12,14 +12,16 @@ import (
 
 //ProductController
 type ProductController struct {
-	dataSource ProductDataSource
-	logger     *log.Entry
+	dataSource    ProductDataSource
+	productsCache ProductsCache
+	logger        *log.Entry
 }
 
 //NewController using the dataSource and logger passed as parameters
-func NewController(ds ProductDataSource, logger *log.Logger) ProductController {
+func NewController(ds ProductDataSource, productsCache ProductsCache, logger *log.Logger) ProductController {
 	return ProductController{
 		ds,
+		productsCache,
 		logger.WithFields(log.Fields{
 			"file": "ProductController",
 		}),
@@ -29,12 +31,21 @@ func NewController(ds ProductDataSource, logger *log.Logger) ProductController {
 func (p ProductController) GetProducts(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 
-	products, err := p.dataSource.GetProducts()
+	var products []Product
+	var err error
+	if products, err = p.productsCache.GetAll(); err != nil {
+		products, err = p.dataSource.GetProducts()
+		p.logger.Info("Retrieving products from mongo")
 
-	if err != nil {
-		p.logger.Error(err.Error())
-		util.EncodeError(response, http.StatusInternalServerError, err.Error())
-		return
+		if err != nil {
+			p.logger.Error(err.Error())
+			util.EncodeError(response, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		if err := p.productsCache.PutAll(products); err != nil {
+			p.logger.Error(err.Error())
+		}
 	}
 
 	p.logger.Info("Products retrieved: ", products)
@@ -46,17 +57,27 @@ func (p ProductController) GetProducts(response http.ResponseWriter, request *ht
 
 func (p ProductController) GetProduct(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
-	params := mux.Vars(request)
+	code := mux.Vars(request)["code"]
 
-	product, err := p.dataSource.GetProduct(params["code"])
-	if err != nil {
-		p.logger.Error(err)
-		util.EncodeError(response, http.StatusInternalServerError, err.Error())
-		return
+	var product *Product
+	var err error
+
+	if product, err = p.productsCache.GetOne(code); err != nil {
+		product, err = p.dataSource.GetProduct(code)
+		p.logger.Info("Retrieving product from mongo")
+
+		if err != nil {
+			p.logger.Error(err)
+			util.EncodeError(response, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		if err := p.productsCache.PutOne(*product); err != nil {
+			p.logger.Error(err.Error())
+		}
 	}
 
 	json.NewEncoder(response).Encode(product)
-
 }
 
 func (p ProductController) AddProduct(response http.ResponseWriter, request *http.Request) {
