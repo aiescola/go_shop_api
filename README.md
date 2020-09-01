@@ -109,21 +109,6 @@ Raw body:
 ```sh
 /api/discounts/
 ```
-Raw body:
-```json
-
-{
-    "code": "PRD02",
-    "type": "product",
-    "name": "One Product discount (voucher)",
-    "description": "Mugs at 9.95 for a limited time",
-    "productCodes": [
-        "MUG"
-    ],
-    "price": 9.95
-}
-
-```
 
 Raw body:
 ```json
