@@ -26,25 +26,31 @@ func NewController(ds DiscountDataSource, redisDataSource DiscountsCache, logger
 	}
 }
 
+func (dc DiscountController) GetDiscountOld(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json")
+
+	var discounts []Discount
+
+	if err := dc.getDiscountsInternal(&discounts); err != nil {
+		dc.logger.Error(err.Error())
+		util.EncodeError(response, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	dc.logger.Info("Discounts retrieved: ", discounts)
+
+	json.NewEncoder(response).Encode(discounts[0])
+}
+
 func (dc DiscountController) GetDiscounts(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 
 	var discounts []Discount
-	var err error
 
-	if discounts, err = dc.discountsCache.GetAll(); err != nil {
-		discounts, err = dc.dataSource.GetDiscounts()
-		dc.logger.Info("Retrieving discounts from mongo")
-
-		if err != nil {
-			dc.logger.Error(err.Error())
-			util.EncodeError(response, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		if err := dc.discountsCache.PutAll(discounts); err != nil {
-			dc.logger.Error(err.Error())
-		}
+	if err := dc.getDiscountsInternal(&discounts); err != nil {
+		dc.logger.Error(err.Error())
+		util.EncodeError(response, http.StatusInternalServerError, err.Error())
+		return
 	}
 
 	dc.logger.Info("Discounts retrieved: ", discounts)
@@ -52,6 +58,24 @@ func (dc DiscountController) GetDiscounts(response http.ResponseWriter, request 
 	json.NewEncoder(response).Encode(struct {
 		Discounts []Discount `json:"discounts"`
 	}{discounts})
+}
+
+func (dc DiscountController) getDiscountsInternal(discounts *[]Discount) error {
+	var err error
+	if *discounts, err = dc.discountsCache.GetAll(); err != nil {
+		*discounts, err = dc.dataSource.GetDiscounts()
+		dc.logger.Info("Retrieving discounts from mongo")
+
+		if err != nil {
+			return err
+		}
+
+		if err := dc.discountsCache.PutAll(*discounts); err != nil {
+			dc.logger.Error(err.Error())
+		}
+	}
+
+	return nil
 }
 
 func (dc DiscountController) GetDiscount(response http.ResponseWriter, request *http.Request) {

@@ -56,6 +56,7 @@ func (api Api) CreateRouter() *mux.Router {
 	router.HandleFunc("/api/products", api.authMiddleWare.Intercept(api.productController.AddProduct)).Methods("POST")
 
 	router.HandleFunc("/api/discounts", api.discountController.GetDiscounts).Methods("GET")
+	router.HandleFunc("/old/api/discounts", api.discountController.GetDiscountOld).Methods("GET")
 	router.HandleFunc("/api/discounts/{code}", api.discountController.GetDiscount).Methods("GET")
 	router.HandleFunc("/api/discounts", api.authMiddleWare.Intercept(api.discountController.AddDiscount)).Methods("POST")
 
