@@ -1,6 +1,10 @@
 version: '3.8'
 services:
   api:
+    environment:
+      - BBDD_URI=$BBDD_URI
+      - BBDD_NAME=$BBDD_NAME
+      - SESSION_KEY=$SESSION_KEY
     container_name: 'go_shop_api'
     build: './'
     image: 'go_shop_api'
